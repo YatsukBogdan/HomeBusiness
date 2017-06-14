@@ -6,6 +6,7 @@ import EmptyArea from './EmptyArea.jsx';
 import Journal from './Journal/index.jsx';
 import Clients from './Clients/index.jsx';
 import Products from './Products/index.jsx';
+import Stock from './Stock/index.jsx';
 
 const BusinessApp = React.createClass({
   componentDidMount() {
@@ -32,7 +33,6 @@ const BusinessApp = React.createClass({
       }
       return response.json();
     }).then((data) => {
-      console.log(data);
       this.setState({
         products: data.products
       });
@@ -48,11 +48,10 @@ const BusinessApp = React.createClass({
       }
       return response.json();
     }).then((data) => {
-      console.log(data);
       this.setState({
         stock: data.stock
       }, () => {
-        this.filterStock();
+        //this.filterStock();
       });
     }).catch((err) => {
       console.log(err);
@@ -149,6 +148,9 @@ const BusinessApp = React.createClass({
         activeWindow = <Clients clients={this.state.clients}
                                 token={this.props.token}
                                 loadClients={this.loadClients}/>
+        break;
+      case 6:
+        activeWindow = <Stock stock={this.state.stock}/>
         break;
       default:
         activeWindow = <EmptyArea />;

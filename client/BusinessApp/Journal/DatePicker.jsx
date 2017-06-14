@@ -27,7 +27,8 @@ const DatePicker = React.createClass({
   handleChange(date) {
     this.setState({
       current_date: date
-    })
+    }),
+    this.props.setDate(date.toISOString());
   },
   render() {
     return (

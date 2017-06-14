@@ -9,22 +9,14 @@ const Product = React.createClass({
   },
   getInitialState() {
     return {
-      active_product: -1,
-      options: [],
-      amount: 0,
-      amountValid: true,
-      amountEntered: false
+      options: []
     }
-  },
-  componentWillReceiveProps(props) {
-    this.setState({active_product: props.product.id});
   },
   setProduct(ev, data) {
     this.props.setProduct(data.value, this.props.id);
-    this.setState({active_product: data.value});
   },
   getTotalPrice() {
-    return parseFloat(this.getPrice()) * parseInt(this.state.amount);
+    return parseFloat(this.props.product.price) * parseInt(this.props.product.amount);
   },
   getDropdownOptions() {
     if (this.props.type === 'sale') {
@@ -40,77 +32,34 @@ const Product = React.createClass({
         this.setState({options: options});
       } else {
         this.setState({
-          options: [{
-            text: 'There is no products lefted'
-          }]
+          options: []
         });
       }
     } else {
-        var options = [];
-        for (var i = 0; i < this.props.products.length; i++) {
-          options.push({
-            text: this.props.products[i].title,
-            value: this.props.products[i]._id
-          });
-        }
-        this.setState({options: options});
-    }
-  },
-  getPrice() {
-    if (this.state.active_product !== -1) {
-      var priceType = 'purchasePrice';
-      if (this.props.type === 'sale') {
-        priceType = 'salePrice'; 
-      }
+      var options = [];
       for (var i = 0; i < this.props.products.length; i++) {
-        if (this.state.active_product === this.props.products[i]._id) {
-          return this.props.products[i][priceType];
-        }
+        options.push({
+          text: this.props.products[i].title,
+          value: this.props.products[i]._id
+        });
       }
-    } else {
-      return 0;
+      this.setState({options: options});
     }
   },
   amountOnChange(ev) {
-    this.setState({
-      amount: ev.target.value,
-      amountEntered: true
-    }, () => {
-      this.validateAmount();
-    });
-  },
-  validateAmount() {
-    var amountValid = true;
-    if (/^\d+$/.test(this.state.amount)) {
-      for (var i = 0; i < this.props.stock.list.length; i++) {
-        if (this.state.active_product === this.props.stock.list[i].product._id) {
-          if (this.props.type === 'sale') {
-            if (parseInt(this.state.amount) > this.props.stock.list[i].amount) amountValid = false;
-          }
-          if (parseInt(this.state.amount) <= 0) amountValid = false;
-          break;
-        }
-      }
-    } else {
-      amountValid = false;
-    }
-    this.setState({
-      amountValid: amountValid
-    }, () => {
-      this.props.setAmount(parseInt(this.state.amount), this.state.amountValid, this.state.amountEntered, this.props.id);
-    });
+    this.props.setAmount(ev.target.value, this.props.id);
   },
   render() {
     return (
       <Table.Row error={this.props.invalid}>
         <Table.Cell>
-          <Dropdown fluid search selection options={this.state.options} onChange={this.setProduct} value={this.state.active_product}/>
+          <Dropdown fluid search selection noResultsMessage='There is no products lefted' options={this.state.options} onChange={this.setProduct} value={this.props.product.id}/>
         </Table.Cell>
         <Table.Cell>
-          <Input fluid error={!this.state.amountValid} placeholder='Enter amount' value={this.state.amount} onChange={this.amountOnChange}/>
+          <Input fluid error={!this.props.product.amountValid} placeholder='Enter amount' value={this.props.product.amount} onChange={this.amountOnChange}/>
         </Table.Cell>
         <Table.Cell>
-          {this.getPrice().toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')}
+          {this.props.product.price.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')}
         </Table.Cell>
         <Table.Cell>
           {this.getTotalPrice().toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,')}
@@ -128,7 +77,26 @@ const InvoiceModal = React.createClass({
     if (!this.props.new_invoice) {
       if (this.props.invoice) {
         this.parseExistingInvoice();
+        this.createFakeStock();
       }
+    }
+  },
+  createFakeStock() {
+    var fake_stock = JSON.parse(JSON.stringify(this.props.stock));
+    for (var i = 0; i < this.props.invoice.products.length; i++) {
+      for (var j = 0; j < fake_stock.list.length; j++) {
+        if (fake_stock.list[j].product._id === this.props.invoice.products[i].product._id) {
+          fake_stock.list[j].amount += this.props.invoice.products[i].amount;
+        }
+      }
+    }
+    this.setState({fake_stock: fake_stock});
+  },
+  getStock() {
+    if (this.props.new_invoice) {
+      return this.props.stock;
+    } else {
+      return this.state.fake_stock;
     }
   },
   parseExistingInvoice() {
@@ -138,7 +106,8 @@ const InvoiceModal = React.createClass({
         id: this.props.invoice.products[i].product._id,
         amount: this.props.invoice.products[i].amount,
         amountValid: true,
-        amountEntered: true
+        amountEntered: true,
+        price: this.props.invoice.products[i].product[this.getInvoiceType() + 'Price']
       });
     }
     this.setState({
@@ -157,11 +126,13 @@ const InvoiceModal = React.createClass({
         id: '',
         amount: 0,
         amountValid: true,
-        amountEntered: false
+        amountEntered: false,
+        price: 0
       }],
       total: 0,
       invalid_product_fields: [],
-      button_enabled: false
+      button_enabled: false,
+      fake_stock: null
     }
   },
   appendNewProduct() {
@@ -170,7 +141,8 @@ const InvoiceModal = React.createClass({
         id: '',
         amount: 0,
         amountValid: true,
-        amountEntered: false
+        amountEntered: false,
+        price: 0
       })
     }, () => {
       this.saveButtonControl();
@@ -183,20 +155,11 @@ const InvoiceModal = React.createClass({
       return this.props.invoice.type;
     }
   },
-  getProductPrice(id) {
-    var priceType = this.getInvoiceType() + 'Price';
-    for (var i in this.props.products) {
-      if (id === this.props.products[i]._id) {
-        return this.props.products[i][priceType];
-      }
-    }
-    return 0;
-  },
   getTotalPrice() {
     var sum = 0;
     for (var i in this.state.products) {
       if (this.state.products[i].amountValid) {
-        sum += this.state.products[i].amount * this.getProductPrice(this.state.products[i].id);
+        sum += this.state.products[i].amount * this.state.products[i].price;
       }
     }
     this.setState({total: Math.round(sum * 100) / 100});
@@ -228,17 +191,47 @@ const InvoiceModal = React.createClass({
   setProduct(id, index) {
     var products = this.state.products;
     products[index].id = id;
+    for (var i = 0; i < this.props.products.length; i++) {
+      if (this.props.products[i]._id === id) {
+        products[index].price = this.props.products[i][this.getInvoiceType() + 'Price'];
+        break;
+      }
+    }
     this.setState({products: products}, () => {
       this.validateProductsDifferency();
       this.getTotalPrice();
     });
   },
-  setAmount(amount, amountValid, amountEntered, index) {
+  setAmount(amount, index) {
     var products = this.state.products;
     products[index].amount = amount;
-    products[index].amountValid = amountValid;
-    products[index].amountEntered = amountEntered;
     this.setState({products: products}, () => {
+      this.validateAmount(index);
+    });
+  },
+  validateAmount(index) {
+    var products = this.state.products;
+    var amountValid = true;
+    if (/^\d+$/.test(products[index].amount)) {
+      if (this.getInvoiceType() === 'sale') {
+        var stock = this.getStock();
+        console.log(stock);
+        for (var i = 0; i < stock.list.length; i++) {        
+          if (products[index].id === stock.list[i].product._id) {
+            if (parseInt(products[index].amount) > stock.list[i].amount) amountValid = false;
+            break;
+          }
+        }
+      }
+      if (parseInt(products[index].amount) <= 0) amountValid = false;
+    } else {
+      amountValid = false;
+    }
+    products[index].amountValid = amountValid;
+    products[index].amountEntered = true;
+    this.setState({
+      products: products
+    }, () => {
       this.saveButtonControl();
       this.getTotalPrice();
     });
@@ -276,17 +269,31 @@ const InvoiceModal = React.createClass({
     for (var i in this.state.products) {
       products.push({
         product: this.state.products[i].id,
-        amount: this.state.products[i].amount
+        amount: parseInt(this.state.products[i].amount)
       });
     }
     var body = {};
+    if (!this.props.new_invoice) {
+      body.id = this.props.invoice._id;
+    }
     body.products_record = products;
     body.client = this.getInvoiceClient();
     body.enterprenuer = this.props.user.activeEnterprenuer;
     body.type = this.getInvoiceType();
-    body.date = (new Date()).toISOString();
+    var date_string;
+    if (this.props.new_invoice) {
+      var date = new Date();
+      date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+      date_string = date.toISOString()
+    } else {
+      date_string = this.props.invoice.date;
+    }
+    body.date = date_string;
+
+    var method = this.props.new_invoice ? 'POST' : 'PUT';
+
     var options = {
-      method: 'POST',
+      method: method,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'JWT ' + this.props.token
@@ -301,11 +308,13 @@ const InvoiceModal = React.createClass({
     });
   },
   renderProducts() {
-    if (this.state.products.length !== 0) {
+    if (this.state.products.length !== 0 && this.getStock()) {
       var prods = [];
       for (var i in this.state.products) {
-        prods.push(<Product stock={this.props.stock}
+        prods.push(<Product stock={this.getStock()}
                             type={this.getInvoiceType()}
+                            new_invoice={this.props.new_invoice}
+                            invoice={this.props.invoice}
                             products={this.props.products}
                             product={this.state.products[i]}
                             setProduct={this.setProduct}
@@ -322,6 +331,7 @@ const InvoiceModal = React.createClass({
   renderClient() {
     if (this.getInvoiceType() === 'sale') {
       return <InvoiceHead clients={this.props.clients}
+                          client={this.state.client}
                           setClient={this.setClient}/>;
     } else {
       return false;

@@ -31,9 +31,9 @@ const Invoice = React.createClass({
   },
   getClientName() {
     if (this.props.invoice.type === 'sale') {
-      return this.props.invoice.client.name + ' ' + this.props.invoice.client.surname;
+      return this.props.invoice.client.surname + ' ' + this.props.invoice.client.name;
     } else {
-      return this.props.invoice.enterprenuer.name + ' ' + this.props.invoice.enterprenuer.surname;
+      return this.props.invoice.enterprenuer.surname + ' ' + this.props.invoice.enterprenuer.name;
     }
   },
   render() {
@@ -68,10 +68,16 @@ const InvoicesTable = React.createClass({
   renderInvoices() {
     if (this.props.invoices.length !== 0) {
       var rendered_invoices = [];
+      var start_date = new Date(this.props.date);
+      var end_date = new Date(this.props.date);
+      end_date.setDate(end_date.getDate() + 1);
       for (var i in this.props.invoices) {
-        rendered_invoices.push(<Invoice id={i}
-                                        invoice={this.props.invoices[i]}
-                                        openInvoiceModal={this.props.openInvoiceModal}/>);
+        var invoice_date = new Date(this.props.invoices[i].date);
+        if (invoice_date > start_date && invoice_date < end_date) {
+          rendered_invoices.push(<Invoice id={i}
+                                          invoice={this.props.invoices[i]}
+                                          openInvoiceModal={this.props.openInvoiceModal}/>);
+        }
       }
       return rendered_invoices;
     } else {

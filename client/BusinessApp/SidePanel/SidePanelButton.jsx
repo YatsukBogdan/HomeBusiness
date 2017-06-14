@@ -6,9 +6,13 @@ const SidePanelButton = React.createClass({
     this.props.setActiveWindow(this.props.window);
   },
   render() {
-    return (
-      <Button active={this.props.active == this.props.window} id='side-panel-button' fluid basic size='big' onClick={e => this.setActiveWindow(e)}>{this.props.content}</Button>
-    )
+    if (this.props.in_production) {
+      return (
+        <Button active={this.props.active == this.props.window} id='side-panel-button' fluid basic size='big' onClick={e => this.setActiveWindow(e)}>{this.props.content}</Button>
+      )
+    } else {
+      return false;
+    }
   }
 });
 

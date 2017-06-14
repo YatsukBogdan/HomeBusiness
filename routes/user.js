@@ -14,7 +14,7 @@ router.post('/', auth.authenticate(), (req, res) => {
         res.json({
           logined: true,
           user: _user,
-          error: null,
+          error: null
         });
       } else {
         res.json({

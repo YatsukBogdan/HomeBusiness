@@ -26,7 +26,7 @@ const InvoiceHead = React.createClass({
   render() {
     return (
       <div>
-        <Dropdown placeholder='Clients' search selection options={this.state.clientsOptions} onChange={this.setClient}/>
+        <Dropdown placeholder='Clients' search selection options={this.state.clientsOptions} onChange={this.setClient} value={this.props.client}/>
       </div>
     )
   }

@@ -90,10 +90,18 @@
 #new-product-title, #new-product-full-title, #new-product-purchase-price {
   margin-bottom: 20px;
 }
+
 #invoces-table, #clients-table {
   width: 100%;
   position: absolute;
   top: 100px;
+  left: 0;
+  padding: 20px;
+}
+
+#stock-table {
+  width: 100%;
+  position: absolute;
   left: 0;
   padding: 20px;
 }

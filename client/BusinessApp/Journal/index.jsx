@@ -5,20 +5,30 @@ import InvoicesTable from './InvoicesTable.jsx';
 import InvoiceModal from './InvoiceModal/index.jsx';
 
 const Journal = React.createClass({
-  componentDidMount() {
-    console.log(this.props.invoices[-1]);
+  componenetDidMount() {
+    this.getCurrentDate();
   },
   getInitialState() {
     return {
       new_invoce_type: 'sale',
       current_invoice_id: -1,
       invoice_modal_opened: false,
-      new_invoice: false
+      new_invoice: false,
+      current_date: (new Date()).toISOString()
     }
   },
+  getCurrentDate() {
+    var date = new Date();
+    date.setUTCHours(0);
+    date.setUTCMinutes(0);
+    date.setUTCSeconds(0);
+    date.setUTCMilliseconds(0);
+    this.setState({current_date: date.toISOString()});
+  },
+  setDate(date) {
+    this.setState({current_date: date});
+  },
   openInvoiceModal(index) {
-    console.log(index);
-    console.log(this.props.invoices[index]);
     this.setState({
       invoice_modal_opened: true,
       current_invoice_id: index,
@@ -62,9 +72,11 @@ const Journal = React.createClass({
   render() {
     return (
       <div className='window'>
-        <Head openNewInvoiceModal={this.openNewInvoiceModal}/>
+        <Head openNewInvoiceModal={this.openNewInvoiceModal}
+              setDate={this.setDate}/>
         <InvoicesTable openInvoiceModal={this.openInvoiceModal}
-                       invoices={this.props.invoices}/>
+                       invoices={this.props.invoices}
+                       date={this.state.current_date}/>
         {this.renderInvoiceModal()}
       </div>
     )

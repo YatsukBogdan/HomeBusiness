@@ -9,7 +9,7 @@ const Head = React.createClass({
       <div id='journal-head'>
         <Button id='journal-head-button' onClick={() => this.props.openNewInvoiceModal('purchase')}>New Purchase Invoice</Button>
         <Button id='journal-head-button' onClick={() => this.props.openNewInvoiceModal('sale')}>New Sales Invoice</Button>
-        <DatePicker />
+        <DatePicker setDate={this.props.setDate}/>
       </div>
     )
   }

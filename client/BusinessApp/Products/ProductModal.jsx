@@ -59,12 +59,10 @@ const ProductModal = React.createClass({
       }
       return response.json();
     }).then((data) => {
-      console.log(data);
       this.closeNextModal();
       this.props.onClose();
       this.props.loadProducts();
     }).catch((err) => {
-      console.log(err);
     });
   },
   postRequestParams() {
@@ -159,7 +157,6 @@ const ProductModal = React.createClass({
       }
       return response.json();
     }).then((data) => {
-      console.log(data);
       this.props.onClose();
       this.props.loadProducts();
     }).catch((err) => {
